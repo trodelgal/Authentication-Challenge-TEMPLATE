@@ -10,6 +10,7 @@ const USERS = [{ email: "admin@email.com",
     isAdmin: true }];
 const INFORMATION = [{name:"admin", info:"admin info"}];
 const REFRESH_TOKENS = [];
+const OPTIONS= [ { method: "post", path: "/users/register", description: "Register, required: email, user, password", example: { body: { email: "user@email.com", name: "user", password: "password" } } }, { method: "post", path: "/users/login", description: "Login, required: valid email and password", example: { body: { email: "user@email.com", password: "password" } } }, { method: "post", path: "/users/token", description: "Renew access token, required: valid refresh token", example: { headers: { token: "*Refresh Token*" } } }, { method: "post", path: "/users/tokenValidate", description: "Access Token Validation, required: valid access token", example: { headers: { authorization: "Bearer *Access Token*" } } }, { method: "get", path: "/api/v1/information", description: "Access user's information, required: valid access token", example: { headers: { authorization: "Bearer *Access Token*" } } }, { method: "post", path: "/users/logout", description: "Logout, required: access token", example: { body: { token: "*Refresh Token*" } } }, { method: "get", path: "api/v1/users", description: "Get users DB, required: Valid access token of admin user", example: { headers: { authorization: "Bearer *Access Token*" } } } ];
 
 app.use(express.json());
 
@@ -124,16 +125,32 @@ app.get("/api/v1/users",checkToken, (req,res)=>{
     }else{
         res.status(400).send('User is not admin')
     }
-})
+});
 
-// const errorHandler = (error, request, response, next) => {
-//     console.error(error.message)
-//     if (error.name === 'CastError') {
-//       return response.status(400).send({ error: 'malformatted id' })
-//     } 
-//     next(error)
-//   } 
-//   app.use(errorHandler)
+app.options('/',(req,res)=>{
+    let token = req.headers['x-access-token'] || req.headers.authorization;
+    if (token) {
+        token = token.split(' ')[1];
+        jwt.verify(token, 'secret', (err, decoded) => {
+          if (err) {
+            let options = [OPTIONS[1],OPTIONS[2],OPTIONS[3]] 
+            res.status(200).header({allow:'OPTION,GET,POST'}).send(options);
+          }
+          const user = USERS.filter(user => user.name === decoded.name);
+          if(user[0].isAdmin){
+            res.status(200).header({allow:'OPTION,GET,POST'}).send(OPTIONS)
+        }else{
+            OPTIONS.pop(); 
+            res.status(200).header({allow:'OPTION,GET,POST'}).send(OPTIONS)
+        }
+        });
+      } else {
+        let options = [OPTIONS[1],OPTIONS[2]] 
+        console.log(options);
+            res.status(200).header({allow:'OPTION,GET,POST'}).send(options);
+      }
+});
+
   
   const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
