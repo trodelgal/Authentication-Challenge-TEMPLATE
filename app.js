@@ -8,7 +8,7 @@ const USERS = [{ email: "admin@email.com",
     name: "admin",
     password: "$2b$10$t6NWpSU.Z9InTgo6stZf7eIivLA6hZ5WlsFV3eKrNL2h.3RsOh0Oi",
     isAdmin: true }];
-const INFORMATION = [{user:"admin", info:"admin info"}];
+const INFORMATION = [{name:"admin", info:"admin info"}];
 const REFRESH_TOKENS = [];
 
 app.use(express.json());
@@ -107,8 +107,8 @@ app.post("/users/token", async (req,res)=>{
 
 app.get("/api/v1/information", checkToken, async (req,res)=>{
     console.log(req.decoded);
-    const info = INFORMATION.filter(user => user.user === req.decoded.name)
-    console.log("info", info);
+    const info = INFORMATION.filter(user => user.name === req.decoded.name)
+    console.log(info);
     res.status(200).json(info.map(user=>{
         return {
             user: user.name,
